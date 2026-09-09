@@ -23,8 +23,10 @@ import { StockAdjustmentModal } from './components/modals/StockAdjustmentModal';
 import { JournalEntryModal } from './components/modals/JournalEntryModal';
 import { TestRunnerModal } from './components/modals/TestRunnerModal';
 import { CommandPalette } from './components/CommandPalette';
+import { ShareDocumentModal, ShareDocType } from './components/modals/ShareDocumentModal';
+import { PaymentReceiptModal } from './components/modals/PaymentReceiptModal';
 
-import { Customer, Invoice, Product } from './types';
+import { Customer, Invoice, Payment, Product, Quote, SalesOrder } from './types';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
@@ -45,6 +47,14 @@ export default function App() {
   const [isStockAdjustmentOpen, setIsStockAdjustmentOpen] = useState(false);
   const [selectedProductForAdjustment, setSelectedProductForAdjustment] = useState<Product | null>(null);
   const [isJournalModalOpen, setIsJournalModalOpen] = useState(false);
+
+  // Document Sharing and Receipt Modals
+  const [shareConfig, setShareConfig] = useState<{
+    isOpen: boolean;
+    type: ShareDocType;
+    data: any;
+  } | null>(null);
+  const [selectedPaymentReceipt, setSelectedPaymentReceipt] = useState<Payment | null>(null);
 
   // Force re-render helper when DB mutates
   const refreshApp = () => {
@@ -136,6 +146,7 @@ export default function App() {
                 }}
                 onViewInvoice={(id) => setSelectedInvoiceId(id)}
                 onRecordPayment={(inv) => setPaymentInvoice(inv)}
+                onOpenShare={(inv) => setShareConfig({ isOpen: true, type: 'INVOICE', data: inv })}
               />
             )}
 
@@ -146,6 +157,7 @@ export default function App() {
                 }
                 onViewInvoice={(id) => setSelectedInvoiceId(id)}
                 onRefresh={refreshApp}
+                onOpenShare={(type, data) => setShareConfig({ isOpen: true, type, data })}
               />
             )}
 
@@ -153,6 +165,8 @@ export default function App() {
               <PaymentsView
                 onOpenRecordPayment={() => handleOpenQuickCreate('payment')}
                 onViewInvoice={(id) => setSelectedInvoiceId(id)}
+                onViewReceipt={(p) => setSelectedPaymentReceipt(p)}
+                onShareReceipt={(p) => setShareConfig({ isOpen: true, type: 'PAYMENT_RECEIPT', data: p })}
               />
             )}
 
@@ -265,6 +279,7 @@ export default function App() {
           setActiveTab('journal-entries');
         }}
         onRefresh={refreshApp}
+        onOpenShare={(inv) => setShareConfig({ isOpen: true, type: 'INVOICE', data: inv })}
       />
 
       {/* 3. Record Payment Modal */}
@@ -275,6 +290,7 @@ export default function App() {
         onSuccess={() => {
           refreshApp();
         }}
+        onOpenShare={(p) => setShareConfig({ isOpen: true, type: 'PAYMENT_RECEIPT', data: p })}
       />
 
       {/* 4. Customer Modal (Add/Edit) */}
@@ -329,6 +345,22 @@ export default function App() {
         onNavigate={(tab) => setActiveTab(tab)}
         onViewInvoice={(id) => setSelectedInvoiceId(id)}
         onOpenQuickCreate={handleOpenQuickCreate}
+      />
+
+      {/* 10. Universal Share Document Modal (WhatsApp, Email, WebShare, Download) */}
+      <ShareDocumentModal
+        isOpen={!!shareConfig?.isOpen}
+        onClose={() => setShareConfig(null)}
+        type={shareConfig?.type || 'INVOICE'}
+        data={shareConfig?.data}
+      />
+
+      {/* 11. Payment Receipt Voucher View Modal */}
+      <PaymentReceiptModal
+        isOpen={!!selectedPaymentReceipt}
+        payment={selectedPaymentReceipt}
+        onClose={() => setSelectedPaymentReceipt(null)}
+        onOpenShare={(p) => setShareConfig({ isOpen: true, type: 'PAYMENT_RECEIPT', data: p })}
       />
     </div>
   );

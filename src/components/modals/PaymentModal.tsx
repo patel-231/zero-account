@@ -1,15 +1,26 @@
 import React, { useState } from 'react';
-import { X, CreditCard, CheckCircle2, AlertCircle } from 'lucide-react';
+import {
+  X,
+  CreditCard,
+  CheckCircle2,
+  AlertCircle,
+  Download,
+  Share2,
+  Receipt,
+  ArrowRight,
+} from 'lucide-react';
 import { db } from '../../server/db';
 import { recordCustomerPayment } from '../../services/paymentService';
 import { formatINR } from '../../utils/money';
-import { Invoice, PaymentMethod } from '../../types';
+import { Invoice, Payment, PaymentMethod } from '../../types';
+import { downloadPaymentReceiptPDF } from '../../utils/pdfService';
 
 interface PaymentModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
   invoice: Invoice | null;
+  onOpenShare?: (payment: Payment) => void;
 }
 
 export const PaymentModal: React.FC<PaymentModalProps> = ({
@@ -17,6 +28,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   onClose,
   onSuccess,
   invoice,
+  onOpenShare,
 }) => {
   if (!isOpen || !invoice) return null;
 
@@ -28,6 +40,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const [notes, setNotes] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [recordedPayment, setRecordedPayment] = useState<Payment | null>(null);
 
   const remainingDue = Math.max(0, Number((invoice.amountDue - (amount || 0)).toFixed(2)));
 
@@ -42,7 +55,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         throw new Error(`Amount cannot exceed invoice outstanding of ${formatINR(invoice.amountDue)}`);
       }
 
-      recordCustomerPayment({
+      const payment = recordCustomerPayment({
         customerId: invoice.customerId,
         invoiceId: invoice.id,
         amount: Number(amount),
@@ -53,14 +66,88 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         notes,
       });
 
+      setRecordedPayment(payment);
       onSuccess();
-      onClose();
     } catch (err) {
       setError((err as Error).message);
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  // If payment succeeded, show confirmation & receipt sharing screen
+  if (recordedPayment) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs">
+        <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+          <div className="p-6 text-center space-y-4">
+            <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
+              <CheckCircle2 className="w-10 h-10" />
+            </div>
+
+            <div>
+              <h3 className="text-lg font-bold text-slate-900">Payment Recorded Successfully!</h3>
+              <p className="text-xs text-slate-500 mt-1">
+                Receipt voucher created and general ledger journal automatically reconciled.
+              </p>
+            </div>
+
+            <div className="p-4 bg-emerald-50/70 border border-emerald-200 rounded-xl space-y-1.5 text-xs">
+              <div className="flex justify-between text-emerald-900">
+                <span>Amount Received:</span>
+                <span className="font-mono font-bold text-sm text-emerald-800">{formatINR(recordedPayment.amount)}</span>
+              </div>
+              <div className="flex justify-between text-slate-600">
+                <span>Customer:</span>
+                <span className="font-semibold text-slate-800">{recordedPayment.customerName}</span>
+              </div>
+              <div className="flex justify-between text-slate-600">
+                <span>Invoice:</span>
+                <span className="font-mono text-slate-800">{invoice.invoiceNumber}</span>
+              </div>
+              <div className="flex justify-between text-slate-600">
+                <span>Mode / Ref:</span>
+                <span className="font-mono text-slate-700">{recordedPayment.paymentMethod} ({recordedPayment.reference})</span>
+              </div>
+            </div>
+
+            <div className="space-y-2 pt-2">
+              {onOpenShare && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onOpenShare(recordedPayment);
+                  }}
+                  className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold shadow-md hover:shadow-lg flex items-center justify-center gap-2 transition"
+                >
+                  <Share2 className="w-4 h-4" />
+                  <span>Send Receipt to Customer (WhatsApp / Email)</span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={() => downloadPaymentReceiptPDF(recordedPayment)}
+                className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition"
+              >
+                <Download className="w-4 h-4" />
+                <span>Download Official Receipt PDF (Rule 50)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={onClose}
+                className="w-full py-2 text-slate-500 hover:text-slate-800 text-xs font-semibold transition"
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 backdrop-blur-xs">

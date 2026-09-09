@@ -64,9 +64,27 @@ function aistudioMediaPlugin(): Plugin {
 }
 // LINT.ThenChange(//depot/google3/java/com/google/alkali/boq/makersuite/applet_dev_service/templates/initializers/react_theme/vite.config.ts:aistudio_media_plugin)
 
+function githubPagesSpaPlugin(): Plugin {
+  return {
+    name: 'github-pages-spa',
+    closeBundle() {
+      const distIndex = path.resolve(__dirname, 'dist', 'index.html');
+      const dist404 = path.resolve(__dirname, 'dist', '404.html');
+      try {
+        if (fs.existsSync(distIndex)) {
+          fs.copyFileSync(distIndex, dist404);
+        }
+      } catch (err) {
+        console.warn('Could not copy index.html to 404.html:', err);
+      }
+    },
+  };
+}
+
 export default defineConfig(() => {
   return {
-    plugins: [react(), tailwindcss(), aistudioMediaPlugin()],
+    base: process.env.VITE_BASE_PATH || './',
+    plugins: [react(), tailwindcss(), aistudioMediaPlugin(), githubPagesSpaPlugin()],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),

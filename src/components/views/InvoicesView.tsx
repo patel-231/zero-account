@@ -11,6 +11,7 @@ import {
   Clock,
   AlertCircle,
   FileDown,
+  Share2,
 } from 'lucide-react';
 import { db } from '../../server/db';
 import { Invoice, InvoiceStatus } from '../../types';
@@ -21,12 +22,14 @@ interface InvoicesViewProps {
   onOpenCreate: () => void;
   onViewInvoice: (id: string) => void;
   onRecordPayment: (invoice: Invoice) => void;
+  onOpenShare?: (invoice: Invoice) => void;
 }
 
 export const InvoicesView: React.FC<InvoicesViewProps> = ({
   onOpenCreate,
   onViewInvoice,
   onRecordPayment,
+  onOpenShare,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
@@ -232,11 +235,21 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
 
                         <button
                           onClick={() => downloadInvoicePDF(inv)}
-                          title="Download PDF"
+                          title="Download High-Res PDF"
                           className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition"
                         >
                           <Download className="w-3.5 h-3.5" />
                         </button>
+
+                        {onOpenShare && (
+                          <button
+                            onClick={() => onOpenShare(inv)}
+                            title="Send / Share Invoice (WhatsApp, Email)"
+                            className="p-1.5 rounded-lg text-blue-600 hover:text-blue-800 hover:bg-blue-50 transition"
+                          >
+                            <Share2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
 
                         {inv.amountDue > 0 && inv.status !== 'DRAFT' && inv.status !== 'CANCELLED' && (
                           <button

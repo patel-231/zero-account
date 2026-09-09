@@ -8,6 +8,8 @@ import {
   CheckCircle2,
   AlertCircle,
   FileText,
+  Download,
+  Share2,
 } from 'lucide-react';
 import { db } from '../../server/db';
 import {
@@ -16,17 +18,21 @@ import {
 } from '../../services/quoteOrderService';
 import { formatINR } from '../../utils/money';
 import { QuoteModal } from '../modals/QuoteModal';
+import { downloadQuotePDF, downloadSalesOrderPDF } from '../../utils/pdfService';
+import { Quote, SalesOrder } from '../../types';
 
 interface QuotesOrdersViewProps {
   onViewInvoice: (invoiceId: string) => void;
   onRefresh: () => void;
   defaultSubTab?: 'quotes' | 'orders' | 'credit-notes';
+  onOpenShare?: (type: 'QUOTE' | 'SALES_ORDER', data: Quote | SalesOrder) => void;
 }
 
 export const QuotesOrdersView: React.FC<QuotesOrdersViewProps> = ({
   onViewInvoice,
   onRefresh,
   defaultSubTab = 'quotes',
+  onOpenShare,
 }) => {
   const [subTab, setSubTab] = useState<'quotes' | 'orders' | 'credit-notes'>(defaultSubTab);
   const [actionSuccessMsg, setActionSuccessMsg] = useState<string | null>(null);
@@ -179,22 +185,42 @@ export const QuotesOrdersView: React.FC<QuotesOrdersViewProps> = ({
                         </span>
                       </td>
                       <td className="p-3.5 text-right">
-                        {q.status !== 'ACCEPTED' ? (
+                        <div className="flex items-center justify-end gap-1.5">
                           <button
-                            onClick={() => handleConvertQuote(q.id)}
-                            className="flex items-center gap-1 ml-auto px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 font-semibold text-[11px] transition"
+                            onClick={() => downloadQuotePDF(q)}
+                            title="Download Quotation PDF"
+                            className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition"
                           >
-                            <span>Convert to Invoice</span>
-                            <ArrowRight className="w-3 h-3" />
+                            <Download className="w-3.5 h-3.5" />
                           </button>
-                        ) : (
-                          <button
-                            onClick={() => q.convertedInvoiceId && onViewInvoice(q.convertedInvoiceId)}
-                            className="text-[11px] text-emerald-600 hover:underline font-semibold"
-                          >
-                            View Invoice &rarr;
-                          </button>
-                        )}
+
+                          {onOpenShare && (
+                            <button
+                              onClick={() => onOpenShare('QUOTE', q)}
+                              title="Send / Share Quotation"
+                              className="p-1.5 rounded-lg text-blue-600 hover:text-blue-800 hover:bg-blue-50 transition"
+                            >
+                              <Share2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+
+                          {q.status !== 'ACCEPTED' ? (
+                            <button
+                              onClick={() => handleConvertQuote(q.id)}
+                              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 font-semibold text-[11px] transition"
+                            >
+                              <span>Convert to Invoice</span>
+                              <ArrowRight className="w-3 h-3" />
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => q.convertedInvoiceId && onViewInvoice(q.convertedInvoiceId)}
+                              className="text-[11px] text-emerald-600 hover:underline font-semibold"
+                            >
+                              View Invoice &rarr;
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -240,22 +266,42 @@ export const QuotesOrdersView: React.FC<QuotesOrdersViewProps> = ({
                         </span>
                       </td>
                       <td className="p-3.5 text-right">
-                        {so.status !== 'FULFILLED' ? (
+                        <div className="flex items-center justify-end gap-1.5">
                           <button
-                            onClick={() => handleConvertOrder(so.id)}
-                            className="flex items-center gap-1 ml-auto px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 font-semibold text-[11px] transition"
+                            onClick={() => downloadSalesOrderPDF(so)}
+                            title="Download Sales Order PDF"
+                            className="p-1.5 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition"
                           >
-                            <span>Convert to Invoice</span>
-                            <ArrowRight className="w-3 h-3" />
+                            <Download className="w-3.5 h-3.5" />
                           </button>
-                        ) : (
-                          <button
-                            onClick={() => so.convertedInvoiceId && onViewInvoice(so.convertedInvoiceId)}
-                            className="text-[11px] text-emerald-600 hover:underline font-semibold"
-                          >
-                            View Invoice &rarr;
-                          </button>
-                        )}
+
+                          {onOpenShare && (
+                            <button
+                              onClick={() => onOpenShare('SALES_ORDER', so)}
+                              title="Send / Share Sales Order"
+                              className="p-1.5 rounded-lg text-blue-600 hover:text-blue-800 hover:bg-blue-50 transition"
+                            >
+                              <Share2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+
+                          {so.status !== 'FULFILLED' ? (
+                            <button
+                              onClick={() => handleConvertOrder(so.id)}
+                              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 font-semibold text-[11px] transition"
+                            >
+                              <span>Convert to Invoice</span>
+                              <ArrowRight className="w-3 h-3" />
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => so.convertedInvoiceId && onViewInvoice(so.convertedInvoiceId)}
+                              className="text-[11px] text-emerald-600 hover:underline font-semibold"
+                            >
+                              View Invoice &rarr;
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}

@@ -10,6 +10,7 @@ import {
   BookOpen,
   Send,
   Building,
+  Share2,
 } from 'lucide-react';
 import { Invoice } from '../../types';
 import { db } from '../../server/db';
@@ -24,6 +25,7 @@ interface InvoiceDetailModalProps {
   onRecordPayment: (invoice: Invoice) => void;
   onViewJournal: (journalId: string) => void;
   onRefresh: () => void;
+  onOpenShare?: (invoice: Invoice) => void;
 }
 
 export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
@@ -33,6 +35,7 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
   onRecordPayment,
   onViewJournal,
   onRefresh,
+  onOpenShare,
 }) => {
   if (!isOpen || !invoice) return null;
 
@@ -102,6 +105,17 @@ export const InvoiceDetailModal: React.FC<InvoiceDetailModalProps> = ({
               <Download className="w-3.5 h-3.5" />
               <span>Download PDF</span>
             </button>
+
+            {/* Send / Share button */}
+            {onOpenShare && (
+              <button
+                onClick={() => onOpenShare(invoice)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 border border-blue-200 hover:bg-blue-100 text-blue-700 text-xs font-bold transition shadow-xs"
+              >
+                <Share2 className="w-3.5 h-3.5" />
+                <span>Send / Share</span>
+              </button>
+            )}
 
             {/* If Draft: Post button */}
             {invoice.status === 'DRAFT' && (
