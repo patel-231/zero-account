@@ -1,0 +1,6 @@
+{
+  "name": "ZeroBooks",
+  "description": "Production-grade Indian Accounting + ERP + CRM SaaS application with double-entry bookkeeping, GST compliance, inventory movements, and financial reports.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
